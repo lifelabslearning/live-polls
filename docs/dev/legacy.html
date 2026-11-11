@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Live Poll</title>
+  <style>
+    :root {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #202020;
+      background: #ffffff;
+      --ink: #202020;
+      --header: #003438;
+      --result-fill: #fad67f;
+      --track: #f1f1f1;
+      --secondary: #ededed;
+      --muted: #797979;
+      --border: #e2e2e2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #ffffff;
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      min-height: 68px;
+      border: 0;
+      border-radius: 999px;
+      padding: 16px 29px;
+      font-size: clamp(20px, 1.28vw, 26px);
+      line-height: 1;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .12s ease, opacity .12s ease, background .12s ease;
+    }
+
+    button:hover:not(:disabled) { transform: translateY(-1px); }
+    button:disabled { opacity: .35; cursor: default; }
+
+    .primary {
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .secondary {
+      background: var(--secondary);
+      color: var(--ink);
+    }
+
+    .page {
+      width: calc(100% - 76px);
+      margin: 0 auto;
+      padding: 55px 0 46px;
+    }
+
+    .creator-controls {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 39px;
+      min-height: 102px;
+    }
+
+    .control-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .response-count {
+      margin: 0;
+      padding-left: 10px;
+      font-size: clamp(16px, 1.02vw, 21px);
+      line-height: 1.2;
+      color: var(--muted);
+      font-weight: 450;
+    }
+
+    .poll-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 32px;
+      align-items: stretch;
+    }
+
+    .poll-card {
+      min-width: 0;
+      overflow: hidden;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 31px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, .07);
+    }
+
+    .question-head {
+      height: 120px;
+      padding: 24px 38px;
+      background: var(--header);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+    }
+
+    .question-head h2 {
+      margin: 0;
+      font-size: clamp(30px, 2.15vw, 44px);
+      line-height: 1.06;
+      letter-spacing: -.035em;
+      font-weight: 760;
+    }
+
+    .options {
+      padding: 31px;
+      display: grid;
+      gap: 19px;
+    }
+
+    .option-row,
+    .choice-row {
+      position: relative;
+      min-height: 92px;
+      overflow: hidden;
+      border-radius: 16px;
+      background: var(--track);
+    }
+
+    .option-fill,
+    .choice-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0;
+      background: var(--result-fill);
+      border-radius: inherit;
+      transition: width .3s ease, background .15s ease;
+    }
+
+    .option-content,
+    .choice-content {
+      position: relative;
+      z-index: 1;
+      min-height: 92px;
+      padding: 0 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .option-label,
+    .choice-label {
+      font-size: clamp(21px, 1.42vw, 29px);
+      line-height: 1.15;
+      font-weight: 430;
+      letter-spacing: -.025em;
+    }
+
+    .option-value {
+      font-size: clamp(17px, 1.08vw, 22px);
+      line-height: 1;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .option-value.hidden-value {
+      visibility: hidden;
+    }
+
+    .choice-row {
+      display: block;
+      cursor: pointer;
+      border: 0;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+    .choice-row:hover {
+      box-shadow: inset 0 0 0 2px #d7d7d7;
+    }
+
+    .choice-row.selected {
+      box-shadow: none;
+    }
+
+    .choice-row.selected .choice-fill {
+      width: 100%;
+      background: var(--result-fill);
+    }
+
+    .choice-row.selected .choice-label {
+      color: var(--ink);
+      font-weight: 650;
+    }
+
+    .choice-row input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .submit-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 32px;
+    }
+
+    .submit-button {
+      min-width: 150px;
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .status {
+      margin: 12px 0 0;
+      text-align: center;
+      font-size: 15px;
+      color: var(--muted);
+      min-height: 18px;
+    }
+
+    .message {
+      min-height: 70vh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .message h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    .message p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 1200px) {
+      .page {
+        width: calc(100% - 48px);
+        padding-top: 36px;
+      }
+
+      .creator-controls {
+        margin-bottom: 28px;
+      }
+
+      .poll-grid {
+        gap: 20px;
+      }
+
+      .poll-card {
+        border-radius: 24px;
+      }
+
+      .question-head {
+        height: 105px;
+        padding: 22px 26px;
+      }
+
+      .options {
+        padding: 22px;
+        gap: 14px;
+      }
+
+      .option-row,
+      .choice-row,
+      .option-content,
+      .choice-content {
+        min-height: 74px;
+      }
+
+      .option-content,
+      .choice-content {
+        padding: 0 20px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .poll-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .creator-controls {
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: calc(100% - 24px);
+        padding: 18px 0 28px;
+      }
+
+      button {
+        min-height: 54px;
+        padding: 14px 20px;
+      }
+
+      .creator-controls {
+        margin-bottom: 20px;
+      }
+
+      .button-row {
+        gap: 10px;
+        width: 100%;
+      }
+
+      .button-row button {
+        flex: 1;
+      }
+
+      .response-count {
+        padding-left: 4px;
+      }
+
+      .poll-card {
+        border-radius: 20px;
+      }
+
+      .question-head {
+        height: auto;
+        min-height: 90px;
+        padding: 20px 22px;
+      }
+
+      .options {
+        padding: 16px;
+        gap: 12px;
+      }
+
+      .option-row,
+      .choice-row,
+      .option-content,
+      .choice-content {
+        min-height: 66px;
+      }
+
+      .option-content,
+      .choice-content {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section id="creatorView" class="hidden">
+      <div class="creator-controls">
+        <div class="control-stack">
+          <div class="button-row">
+            <button id="launchButton" class="primary">Launch poll</button>
+            <button id="resultsButton" class="secondary" disabled>Show results</button>
+          </div>
+          <p id="responseCount" class="response-count hidden">0 responses</p>
+        </div>
+      </div>
+      <div id="creatorCards" class="poll-grid"></div>
+      <p id="creatorStatus" class="status"></p>
+    </section>
+
+    <section id="respondentView" class="hidden">
+      <form id="pollForm">
+        <div id="respondentCards" class="poll-grid"></div>
+        <div class="submit-wrap">
+          <button id="submitButton" class="submit-button" type="submit">Submit</button>
+        </div>
+        <p id="formStatus" class="status"></p>
+      </form>
+    </section>
+
+    <section id="messageView" class="message hidden">
+      <div>
+        <h2 id="messageTitle">Poll unavailable</h2>
+        <p id="messageBody"></p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const SUPABASE_URL = "https://gbasvetwcaylrqqmxudb.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_r5wcRvmQ-NHhJsf1QZbjfg_DBXGn6ZA";
+
+    const POLL_QUESTIONS = [
+      {
+        text: "How clear is the direction?",
+        options: ["Very clear", "Somewhat clear", "Not clear yet"]
+      },
+      {
+        text: "How confident are you?",
+        options: ["Very confident", "Somewhat confident", "Not confident yet"]
+      },
+      {
+        text: "What should happen next?",
+        options: ["Proceed", "Discuss more", "Revisit the plan"]
+      }
+    ];
+
+    const els = {
+      creatorView: document.querySelector("#creatorView"),
+      respondentView: document.querySelector("#respondentView"),
+      messageView: document.querySelector("#messageView"),
+      messageTitle: document.querySelector("#messageTitle"),
+      messageBody: document.querySelector("#messageBody"),
+      launchButton: document.querySelector("#launchButton"),
+      resultsButton: document.querySelector("#resultsButton"),
+      responseCount: document.querySelector("#responseCount"),
+      creatorStatus: document.querySelector("#creatorStatus"),
+      creatorCards: document.querySelector("#creatorCards"),
+      respondentCards: document.querySelector("#respondentCards"),
+      pollForm: document.querySelector("#pollForm"),
+      submitButton: document.querySelector("#submitButton"),
+      formStatus: document.querySelector("#formStatus")
+    };
+
+    let activePoll = null;
+    let creatorResponses = [];
+    let creatorChannel = null;
+    let resultsVisible = false;
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    function showOnly(view) {
+      [els.creatorView, els.respondentView, els.messageView]
+        .forEach(element => element.classList.add("hidden"));
+      view.classList.remove("hidden");
+    }
+
+    function showMessage(title, body) {
+      els.messageTitle.textContent = title;
+      els.messageBody.textContent = body;
+      showOnly(els.messageView);
+    }
+
+    async function ensureUser() {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (sessionData.session?.user) return sessionData.session.user;
+
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      return data.user;
+    }
+
+    function buildPollUrl(pollId) {
+      const url = new URL(location.href);
+      url.search = "";
+      url.hash = "";
+      url.searchParams.set("poll", pollId);
+      return url.toString();
+    }
+
+    async function getPoll(pollId) {
+      const { data, error } = await supabase
+        .from("polls")
+        .select("id, creator_id, created_at, expires_at, questions")
+        .eq("id", pollId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    }
+
+    function createCard(question, index, mode) {
+      const card = document.createElement("article");
+      card.className = "poll-card";
+
+      const head = document.createElement("div");
+      head.className = "question-head";
+
+      const title = document.createElement("h2");
+      title.textContent = question.text;
+      head.appendChild(title);
+      card.appendChild(head);
+
+      const options = document.createElement("div");
+      options.className = "options";
+
+      question.options.forEach((option, optionIndex) => {
+        if (mode === "creator") {
+          const row = document.createElement("div");
+          row.className = "option-row";
+          row.dataset.questionIndex = String(index);
+          row.dataset.optionIndex = String(optionIndex);
+
+          const fill = document.createElement("div");
+          fill.className = "option-fill";
+
+          const content = document.createElement("div");
+          content.className = "option-content";
+
+          const label = document.createElement("span");
+          label.className = "option-label";
+          label.textContent = option;
+
+          const value = document.createElement("span");
+          value.className = "option-value hidden-value";
+          value.textContent = "0%";
+
+          content.append(label, value);
+          row.append(fill, content);
+          options.appendChild(row);
+        } else {
+          const row = document.createElement("label");
+          row.className = "choice-row";
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `q${index}`;
+          input.value = String(optionIndex);
+          input.required = true;
+
+          const fill = document.createElement("span");
+          fill.className = "choice-fill";
+
+          const content = document.createElement("span");
+          content.className = "choice-content";
+
+          const label = document.createElement("span");
+          label.className = "choice-label";
+          label.textContent = option;
+
+          content.appendChild(label);
+          row.append(input, fill, content);
+
+          input.addEventListener("change", () => {
+            const group = els.respondentCards.querySelectorAll(`input[name="q${index}"]`);
+            group.forEach(item => item.closest(".choice-row").classList.toggle("selected", item.checked));
+          });
+
+          options.appendChild(row);
+        }
+      });
+
+      card.appendChild(options);
+      return card;
+    }
+
+    function renderCreatorCards(questions) {
+      els.creatorCards.innerHTML = "";
+      questions.forEach((question, index) => {
+        els.creatorCards.appendChild(createCard(question, index, "creator"));
+      });
+      updateCreatorResultDisplay();
+    }
+
+    function renderRespondentCards(questions) {
+      els.respondentCards.innerHTML = "";
+      questions.forEach((question, index) => {
+        els.respondentCards.appendChild(createCard(question, index, "respondent"));
+      });
+    }
+
+    function updateCreatorResultDisplay() {
+      const questions = activePoll?.questions ?? POLL_QUESTIONS;
+
+      questions.forEach((question, questionIndex) => {
+        const counts = question.options.map(() => 0);
+
+        creatorResponses.forEach(response => {
+          const answerIndex = response.answers?.[questionIndex];
+          if (Number.isInteger(answerIndex) && counts[answerIndex] !== undefined) {
+            counts[answerIndex] += 1;
+          }
+        });
+
+        question.options.forEach((_, optionIndex) => {
+          const row = els.creatorCards.querySelector(
+            `.option-row[data-question-index="${questionIndex}"][data-option-index="${optionIndex}"]`
+          );
+          if (!row) return;
+
+          const fill = row.querySelector(".option-fill");
+          const value = row.querySelector(".option-value");
+          const pct = creatorResponses.length
+            ? Math.round((counts[optionIndex] / creatorResponses.length) * 100)
+            : 0;
+
+          fill.style.width = resultsVisible ? `${pct}%` : "0%";
+          value.textContent = `${pct}%`;
+          value.classList.toggle("hidden-value", !resultsVisible);
+        });
+      });
+    }
+
+    async function loadCreatorResponses(poll) {
+      const { data, error } = await supabase
+        .from("responses")
+        .select("answers, submitted_at")
+        .eq("poll_id", poll.id)
+        .order("submitted_at", { ascending: true });
+
+      if (error) throw error;
+
+      creatorResponses = data ?? [];
+      const total = creatorResponses.length;
+      els.responseCount.textContent = `${total} ${total === 1 ? "response" : "responses"}`;
+      updateCreatorResultDisplay();
+    }
+
+    async function launchPoll() {
+      els.launchButton.disabled = true;
+      els.creatorStatus.textContent = "Creating...";
+
+      try {
+        await ensureUser();
+
+        const { data, error } = await supabase
+          .rpc("create_poll", { p_questions: POLL_QUESTIONS })
+          .single();
+
+        if (error) throw error;
+
+        const pollUrl = buildPollUrl(data.id);
+        history.pushState({}, "", pollUrl);
+
+        const poll = await getPoll(data.id);
+        await showCreatorPoll(poll);
+      } catch (error) {
+        console.error(error);
+        els.creatorStatus.textContent = "Could not create poll.";
+        els.launchButton.disabled = false;
+      }
+    }
+
+    async function copyActivePollUrl() {
+      if (!activePoll) return;
+      const pollUrl = buildPollUrl(activePoll.id);
+
+      try {
+        await navigator.clipboard.writeText(pollUrl);
+        els.launchButton.textContent = "Copied";
+        setTimeout(() => {
+          if (activePoll) els.launchButton.textContent = "Copy link";
+        }, 1000);
+      } catch {
+        window.prompt("Copy this poll link:", pollUrl);
+      }
+    }
+
+    async function showCreatorPoll(poll) {
+      activePoll = poll;
+      creatorResponses = [];
+      resultsVisible = false;
+
+      showOnly(els.creatorView);
+      renderCreatorCards(poll.questions);
+
+      els.launchButton.disabled = false;
+      els.launchButton.textContent = "Copy link";
+      els.resultsButton.disabled = false;
+      els.resultsButton.textContent = "Show results";
+      els.responseCount.classList.remove("hidden");
+      els.creatorStatus.textContent = "";
+
+      await loadCreatorResponses(poll);
+
+      if (creatorChannel) {
+        await supabase.removeChannel(creatorChannel);
+      }
+
+      creatorChannel = supabase
+        .channel(`poll-results-${poll.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "responses",
+            filter: `poll_id=eq.${poll.id}`
+          },
+          async () => {
+            try {
+              await loadCreatorResponses(poll);
+            } catch (error) {
+              console.error("Could not refresh results:", error);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    function toggleResults() {
+      if (!activePoll) return;
+      resultsVisible = !resultsVisible;
+      els.resultsButton.textContent = resultsVisible ? "Hide results" : "Show results";
+      updateCreatorResultDisplay();
+    }
+
+    async function showRespondentPoll(poll, user) {
+      if (Date.now() >= new Date(poll.expires_at).getTime()) {
+        showMessage("This poll has closed", "The one-hour response window has ended.");
+        return;
+      }
+
+      const { data: prior, error: priorError } = await supabase
+        .from("responses")
+        .select("poll_id")
+        .eq("poll_id", poll.id)
+        .eq("respondent_id", user.id)
+        .maybeSingle();
+
+      if (priorError) throw priorError;
+
+      if (prior) {
+        showMessage("Response received", "You have already submitted this poll from this browser.");
+        return;
+      }
+
+      renderRespondentCards(poll.questions);
+      showOnly(els.respondentView);
+      els.formStatus.textContent = "";
+      els.submitButton.disabled = false;
+
+      els.pollForm.onsubmit = async event => {
+        event.preventDefault();
+        els.submitButton.disabled = true;
+        els.formStatus.textContent = "Submitting...";
+
+        const formData = new FormData(els.pollForm);
+        const answers = poll.questions.map((_, index) => Number(formData.get(`q${index}`)));
+
+        if (answers.some(value => !Number.isInteger(value))) {
+          els.formStatus.textContent = "Please answer all three questions.";
+          els.submitButton.disabled = false;
+          return;
+        }
+
+        const { error } = await supabase
+          .from("responses")
+          .insert({
+            poll_id: poll.id,
+            respondent_id: user.id,
+            answers
+          });
+
+        if (error) {
+          console.error(error);
+          els.formStatus.textContent = "Could not submit. The poll may have closed.";
+          els.submitButton.disabled = false;
+          return;
+        }
+
+        showMessage("Thanks", "Your response has been submitted.");
+      };
+    }
+
+    async function route() {
+      try {
+        const user = await ensureUser();
+        const pollId = new URLSearchParams(location.search).get("poll");
+
+        if (!pollId) {
+          activePoll = null;
+          creatorResponses = [];
+          resultsVisible = false;
+
+          if (creatorChannel) {
+            await supabase.removeChannel(creatorChannel);
+            creatorChannel = null;
+          }
+
+          renderCreatorCards(POLL_QUESTIONS);
+          els.launchButton.textContent = "Launch poll";
+          els.launchButton.disabled = false;
+          els.resultsButton.textContent = "Show results";
+          els.resultsButton.disabled = true;
+          els.responseCount.classList.add("hidden");
+          els.creatorStatus.textContent = "";
+          showOnly(els.creatorView);
+          return;
+        }
+
+        const poll = await getPoll(pollId);
+
+        if (!poll) {
+          showMessage("Poll unavailable", "This poll does not exist, or it is no longer available.");
+          return;
+        }
+
+        if (poll.creator_id === user.id) {
+          await showCreatorPoll(poll);
+        } else {
+          await showRespondentPoll(poll, user);
+        }
+      } catch (error) {
+        console.error(error);
+        showMessage("App unavailable", "Check the Supabase project setup and try again.");
+      }
+    }
+
+    els.launchButton.addEventListener("click", async () => {
+      if (activePoll) {
+        await copyActivePollUrl();
+      } else {
+        await launchPoll();
+      }
+    });
+
+    els.resultsButton.addEventListener("click", toggleResults);
+    window.addEventListener("popstate", route);
+
+    await route();
+  </script>
+</body>
+</html>

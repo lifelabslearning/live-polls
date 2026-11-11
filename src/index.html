@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Live Poll</title>
+  <!--
+    Respondent page template. build.py --env <env> inlines session.css, session.js,
+    the DM Sans font and the LifeLabs mark at the markers below, substitutes the
+    __SUPABASE_URL__ / __SUPABASE_KEY__ tokens, and writes docs/<env>/index.html.
+    The URL decides what runs:
+      ?s=<code>   session app: phones follow a deck's session, no sign-in
+      (no query)  session app: a form to type the code
+      ?poll=<id>  legacy one-hour poll: redirects to legacy.html (legacy/index.html,
+                  copied unchanged next to this page by the build)
+  -->
+  <script>
+if (new URLSearchParams(location.search).has("poll")) location.replace("legacy.html" + location.search + location.hash);
+  </script>
+  <style>
+@font-face{font-family:'DM Sans';src:url(data:font/woff2;base64,<!-- inline-base64: DMSans-Variable-latin.woff2 -->) format('woff2');font-weight:100 1000;font-style:normal;font-display:swap}
+  </style>
+  <!-- inline: session.css -->
+</head>
+<body>
+  <main id="s-app" class="s-app" hidden>
+    <header class="s-head">
+      <img src="data:image/png;base64,<!-- inline-base64: lifelabs-mark-96.png -->" alt="LifeLabs Learning" width="24" height="21" />
+      <span class="s-brand">Live poll</span>
+      <span class="s-code" id="s-code"></span>
+    </header>
+    <div id="s-banner" class="s-banner" role="status" hidden>Reconnecting…</div>
+    <div id="s-view"></div>
+    <div id="s-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  </main>
+
+  <!-- inline: session.js -->
+</body>
+</html>

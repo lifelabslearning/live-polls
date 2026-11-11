@@ -1,0 +1,6 @@
+{
+  "url": "http://127.0.0.1:8787",
+  "key": "local-anon-key",
+  "pages_base": "http://127.0.0.1:8787/",
+  "supabase_js": "/vendor/supabase-esm.js"
+}

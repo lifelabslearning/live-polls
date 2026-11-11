@@ -1,0 +1,122 @@
+/* ---------- live poll slides (LifeLabs design system, 1280x720 stage) ----------
+   One session per deck run; one poll per slide. Two layouts per slide: collecting
+   (QR large on the right) and .revealed (chart full width, active title, QR shrinks
+   into a footer row). Shared by the choice, rating, ranking and text types. */
+.llpoll{position:absolute;inset:0;font-family:'DM Sans',system-ui,sans-serif;color:#231f20;--ease:cubic-bezier(.4,0,.2,1)}
+.llpoll p,.llpoll h2,.llpoll ul,.llpoll ol{margin:0}
+.llpoll ul,.llpoll ol{padding:0;list-style:none}
+.llp-head{position:absolute;left:72px;top:75px;width:720px;transition:top .5s var(--ease),width .5s var(--ease)}
+.llp-title{font-size:69.33px;line-height:1.08;font-weight:700;transition:font-size .5s var(--ease)}
+.llp-sub{margin-top:14px !important;font-size:24px;line-height:1.3;color:#00818b}
+.llp-cards{position:absolute;left:72px;top:236px;width:720px;display:flex;flex-direction:column;gap:16px;transition:top .5s var(--ease),width .5s var(--ease)}
+.llp-card{background:#fff;border-radius:16px;box-shadow:0 0 13px rgba(0,0,0,.1);padding:18px 24px 22px;border:3px solid transparent;transition:border-color .3s var(--ease)}
+.llp-q{font-size:22px;line-height:1.3;font-weight:700;transition:color .3s var(--ease)}
+.llp-track{position:relative;margin-top:12px}
+.llp-bar{position:relative;height:38px;border-radius:9999px;background:#ebf6f6;overflow:hidden;display:flex}
+.llp-bar .seg{width:0;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;transition:width .8s var(--ease);font-size:17px;font-weight:700;color:#003438}
+.llp-bar .seg span{padding:0 14px}
+.llp-bar .seg.c0{background:#134246;color:#fff;font-size:19px;justify-content:flex-start}
+.llp-bar .seg.c1{background:#cceff1}
+.llp-bar .seg.c2{background:#b2c2c3;justify-content:flex-end}
+.llp-bar .seg.c3{background:#00adba}
+.llp-bar .seg.c4{background:#ffeb9c}
+.llp-bar .seg.c5{background:#e8ebf6}
+.llp-bar .seg.c6{background:#ffedf2}
+.llp-bar .seg.c7{background:#f7f7f7}
+.llp-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:17px;color:#494949}
+.llp-bar.shown .llp-empty{display:none}
+.llp-mid{position:absolute;left:50%;top:-7px;bottom:-7px;width:0;border-left:2px dashed #231f20;opacity:0;transition:opacity .4s var(--ease);pointer-events:none}
+.llp-mid b{position:absolute;left:6px;top:-22px;font:700 15px/1 'DM Sans',system-ui,sans-serif;color:#231f20;white-space:nowrap}
+.llpoll.revealed .llp-bar.shown+.llp-mid{opacity:.55}
+.llp-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:16px;line-height:1.3;color:#494949}
+.llp-legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-1px;margin-right:6px}
+/* compact cards when a poll has 4 or 5 questions */
+.llpoll.n4 .llp-cards{gap:12px}
+.llpoll.n4 .llp-card{padding:12px 22px 14px}
+.llpoll.n4 .llp-q{font-size:20px}
+.llpoll.n4 .llp-track{margin-top:8px}
+.llpoll.n4 .llp-bar{height:32px}
+.llpoll.n5 .llp-cards{gap:10px}
+.llpoll.n5 .llp-card{padding:10px 20px 11px}
+.llpoll.n5 .llp-q{font-size:19px;line-height:1.2}
+.llpoll.n5 .llp-track{margin-top:6px}
+.llpoll.n5 .llp-bar{height:26px}
+.llpoll.n5 .llp-bar .seg{font-size:15px}
+/* ranking: option list while collecting, ranked bars when revealed */
+.llp-list{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-top:12px}
+.llp-list li{display:flex;align-items:center;gap:10px;font-size:20px;line-height:1.3}
+.llp-list li i{display:inline-flex;width:28px;height:28px;flex:none;border-radius:9999px;background:#cceff1;align-items:center;justify-content:center;font:700 15px/1 'DM Sans',system-ui,sans-serif;font-style:normal}
+.llp-ranks{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.llp-rank{display:grid;grid-template-columns:34px 1fr 96px;align-items:center;gap:12px;font-size:20px;line-height:1.25}
+.llp-rank i{display:inline-flex;width:30px;height:30px;border-radius:9999px;background:#cceff1;align-items:center;justify-content:center;font:700 15px/1 'DM Sans',system-ui,sans-serif;font-style:normal}
+.llp-rank .llp-rbar{position:relative;height:30px;border-radius:9999px;background:#ebf6f6;overflow:hidden}
+.llp-rank .llp-rbar b{position:absolute;left:0;top:0;bottom:0;width:0;background:#134246;border-radius:9999px;transition:width .8s var(--ease)}
+.llp-rank .llp-rbar span{position:absolute;left:14px;top:0;bottom:0;display:flex;align-items:center;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;max-width:calc(100% - 28px);text-overflow:ellipsis}
+.llp-rank .llp-rbar span.dark{color:#003438}
+.llp-rank em{font-style:normal;font-size:18px;color:#494949;text-align:right;white-space:nowrap}
+.llpoll.revealed .llp-rank{grid-template-columns:34px 1fr 120px}
+.llpoll.revealed .llp-rank .llp-rbar{height:36px}
+/* text entries */
+.llp-note{margin-top:12px;font-size:19px;line-height:1.3;color:#494949}
+.llp-wall{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;max-height:330px;overflow:auto;align-content:flex-start;padding-right:4px}
+.llp-chip{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:10px 12px 10px 18px;border-radius:9999px;background:#ebf6f6;font-size:22px;line-height:1.3}
+.llp-chip.masked span{filter:blur(5px);user-select:none}
+.llp-chip.masked::before{content:'Filtered';font-size:14px;font-weight:700;color:#d91d57;flex:none}
+.llp-chip.hidden-entry{display:none}
+.llp-chip button{appearance:none;border:0;background:#fff;color:#494949;width:30px;height:30px;border-radius:9999px;font:700 16px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;flex:none}
+.llp-chip button:hover{background:#231f20;color:#fff}
+.llp-chip span{overflow-wrap:anywhere}
+
+.llp-side{position:absolute;left:836px;top:112px;width:372px;display:flex;flex-direction:column;align-items:center}
+.llp-qrcard{width:372px;background:#fff;border-radius:16px;box-shadow:0 0 13px rgba(0,0,0,.1);padding:24px 24px 18px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.llp-qr{width:256px;height:256px;border-radius:12px;background:#ebf6f6;display:flex;align-items:center;justify-content:center;text-align:center;flex:none}
+.llp-qr.on{background:#fff}
+.llp-qr svg{width:100%;height:100%;display:block}
+.llp-qrnote{font-size:18px;line-height:1.3;color:#494949;padding:0 28px}
+.llp-scan{font-size:26.67px;line-height:1.2;font-weight:700}
+.llp-code{font-size:17px;line-height:1.3;color:#494949;text-align:center}
+.llp-code b{font-size:22px;letter-spacing:.1em;color:#231f20}
+.llp-count{margin-top:16px !important;font-size:26.67px;line-height:1.2;font-weight:700;color:#00818b}
+.llp-btns{margin-top:14px;display:flex;gap:12px}
+.llp-btn{appearance:none;border:2px solid #231f20;background:#fff;color:#231f20;border-radius:9999px;padding:12px 22px;font:700 18px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;white-space:nowrap;transition:background .14s var(--ease),opacity .14s}
+.llp-btn:hover:not(:disabled){background:#ebf6f6}
+.llp-btn.primary{background:#231f20;color:#fff}
+.llp-btn.primary:hover:not(:disabled){background:#134246;border-color:#134246}
+.llp-btn:disabled{opacity:.35;cursor:default}
+.llp-btn:focus-visible,.llp-link:focus-visible{outline:3px solid #00adba;outline-offset:2px}
+.llp-status{margin-top:12px !important;min-height:24px;font-size:16px;line-height:1.4;color:#494949;text-align:center;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.llp-status .warn{color:#d91d57;font-weight:700}
+.llp-link{appearance:none;border:0;background:none;padding:0;font:700 16px/1.4 'DM Sans',system-ui,sans-serif;color:#00818b;text-decoration:underline;cursor:pointer}
+
+/* clickable cards once results exist */
+.llpoll.closed .llp-card.q{cursor:pointer}
+.llpoll.closed .llp-card.q:hover{border-color:#cceff1}
+
+/* ---------- revealed state ---------- */
+.llpoll.revealed .llp-head{top:54px;width:1080px}
+.llpoll.revealed .llp-title{font-size:44px;line-height:1.15}
+.llpoll.revealed .llp-sub{margin-top:10px !important;font-size:20px}
+.llpoll.revealed .llp-cards{top:206px;width:1136px;gap:14px}
+.llpoll.revealed .llp-card{padding:14px 24px 18px}
+.llpoll.revealed.n4 .llp-cards{gap:10px}
+.llpoll.revealed.n4 .llp-card{padding:8px 22px 10px}
+.llpoll.revealed.n4 .llp-q{font-size:19px;line-height:1.2}
+.llpoll.revealed.n4 .llp-track{margin-top:6px}
+.llpoll.revealed.n4 .llp-bar{height:30px}
+.llpoll.revealed.n5 .llp-cards{gap:8px}
+.llpoll.revealed.n5 .llp-card{padding:6px 20px 7px}
+.llpoll.revealed.n5 .llp-q{font-size:18px;line-height:1.2}
+.llpoll.revealed.n5 .llp-track{margin-top:4px}
+.llpoll.revealed.n5 .llp-bar{height:26px}
+.llpoll.revealed.n4 .llp-mid b,.llpoll.revealed.n5 .llp-mid b{display:none}
+.llpoll.revealed .llp-card.pending .llp-q{color:#819c9d}
+.llpoll.revealed .llp-card.current{border-color:#00adba}
+.llpoll.revealed .llp-side{left:72px;top:614px;width:1136px;height:84px;flex-direction:row;align-items:center;gap:20px}
+.llpoll.revealed .llp-count{order:1;margin:0 !important;font-size:22px}
+.llpoll.revealed .llp-status{order:2;margin:0 auto 0 0 !important;justify-content:flex-start}
+.llpoll.revealed .llp-btns{order:3;margin:0}
+.llpoll.revealed .llp-qrcard{order:4;width:auto;flex-direction:row;padding:6px 14px 6px 6px;gap:10px;border-radius:12px}
+.llpoll.revealed .llp-qr{width:72px;height:72px;border-radius:6px}
+.llpoll.revealed .llp-scan{font-size:16px;width:66px;line-height:1.15}
+.llpoll.revealed .llp-code{display:none}
+.llpoll.revealed .llp-wall{max-height:360px}

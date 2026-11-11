@@ -1,0 +1,11 @@
+-- Abuse caps. Draft: fill in the real table and column names from 0001 before applying.
+-- Gate: Ian approves the file, then approves applying it to dev, then to prod.
+--
+-- Intent:
+-- 1. Respondents per session <= 500.
+--    Enforce in the respondent join/upsert function or a trigger, not in page code.
+-- 2. Text entries <= 500 characters.
+--    ALTER TABLE <text_entries> ADD CONSTRAINT text_entry_len CHECK (char_length(<body>) <= 500);
+-- 3. Choice and ranking payloads bounded to the poll's option count (reject out-of-range indices).
+--
+-- Leave the one-open-poll-per-session rule and the 2-hour expiry as they are in 0001.

@@ -1,0 +1,35 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  pages-and-migrate:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    env:
+      # Empty until the production Supabase project exists: the prod build and the
+      # migration push are skipped, the dev page still builds and docs/ is committed.
+      PROD_REF: ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python build.py --env dev
+      - run: python build.py --env prod
+        if: ${{ env.PROD_REF != '' }}
+      - name: Commit docs
+        run: |
+          git config user.name "release-bot"
+          git config user.email "release-bot@users.noreply.github.com"
+          git add docs && git commit -m "Build docs for ${GITHUB_REF_NAME}" || echo "no changes"
+          git push origin HEAD:main
+      - uses: supabase/setup-cli@v1
+        if: ${{ env.PROD_REF != '' }}
+      - name: Push migrations to prod
+        if: ${{ env.PROD_REF != '' }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_PROD_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "$PROD_REF"
+          supabase db push

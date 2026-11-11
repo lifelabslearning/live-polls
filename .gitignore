@@ -1,0 +1,17 @@
+node_modules/
+__pycache__/
+test-results/
+playwright-report/
+supabase/.temp/
+.env
+.env.*
+CLAUDE.local.md
+.claude/settings.local.json
+.DS_Store
+test/index.local.html
+test/deck.local.html
+test/deck.dev.html
+test/supabase-esm.js
+test/fake.log
+test/shots/
+test/shots-deck/
