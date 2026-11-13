@@ -15,3 +15,6 @@ test/supabase-esm.js
 test/fake.log
 test/shots/
 test/shots-deck/
+
+# memory cards hold client names: never in this public repo
+*.llcard.json
